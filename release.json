@@ -1,0 +1,6 @@
+{
+  "repository": "vela-health",
+  "kind": "app",
+  "app_dir": "health",
+  "version_file": "health/app.json"
+}
