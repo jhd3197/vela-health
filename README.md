@@ -1,6 +1,7 @@
 # vela-health
 
-Local habit tracking and a personal wellness dashboard for Vela.
+Local habit tracking and a personal wellness dashboard for Vela, with two
+habit summaries for the Vela desk.
 
 ## Install
 

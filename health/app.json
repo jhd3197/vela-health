@@ -23,6 +23,9 @@
   "capabilities": {
     "required": [
       "storage"
+    ],
+    "optional": [
+      "widgets"
     ]
   },
   "data": {
@@ -34,5 +37,19 @@
       "field": "habits",
       "schema": "legacy.schema.json"
     }
-  }
+  },
+  "widgets": [
+    {
+      "id": "today",
+      "name": "Habits today",
+      "layout": "progress",
+      "size": "m"
+    },
+    {
+      "id": "week",
+      "name": "This week",
+      "layout": "list",
+      "size": "l"
+    }
+  ]
 }

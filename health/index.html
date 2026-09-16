@@ -471,6 +471,7 @@
     document.getElementById('syncRecovery').hidden = true;
     syncStatus.textContent = 'Saved to your engine · checks for changes every 3 seconds';
     renderHabits();
+    publishWidgets();
   }
   function persistHabits() {
     if (saveBusy || conflict) return pendingSave;
@@ -483,10 +484,12 @@
         revision = saved.revision;
         await markDirty(false);
         syncStatus.textContent = 'Saved to your engine';
+        publishWidgets();
       } catch (error) {
         conflict = true;
         document.getElementById('syncRecovery').hidden = false;
         syncStatus.textContent = error.status === 409 ? 'Another client changed these records. Your edits are kept here; export them or reload.' : 'Not saved: ' + error.message;
+        publishWidgets();
         throw error;
       } finally { saveBusy = false; form.inert = conflict; }
     })();
@@ -555,6 +558,43 @@
   // Week columns sized to the viewport, capped at the most recent ~20 weeks.
   function heatWeeks() {
     return Math.max(10, Math.min(20, Math.floor((Math.min(window.innerWidth, 940) - 76) / 18)));
+  }
+
+
+  // What the desk is told about Health. Both summaries come from the habits
+  // actually stored on the server: how many are done today, and how each stands
+  // against its own weekly target. Health has no wearable and invents nothing;
+  // the sample metrics elsewhere in this app are never published.
+  function publishWidgets() {
+    // An older Vela has no widgets bridge, and the permission is optional, so a
+    // missing API and a refused publish both simply mean "not on the desk".
+    if (!loaded || !Vela.widgets) return;
+    var ignore = function () {};
+    var today = new Date();
+    var todayStr = fmtDay(today);
+    var monday = new Date(today);
+    monday.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+    var doneToday = habits.filter(function (h) { return (h.days || {})[todayStr]; }).length;
+    Vela.widgets.publish('today', {
+      value: habits.length ? doneToday + ' of ' + habits.length : 'No habits yet',
+      unit: habits.length ? 'done today' : '',
+      progress: habits.length ? Math.round((doneToday / habits.length) * 100) : 0,
+      caption: conflict ? 'Last save did not go through' : '',
+      attention: conflict,
+    }).catch(ignore);
+    Vela.widgets.publish('week', {
+      caption: habits.length ? '' : 'Add a habit to see it here',
+      rows: habits.slice(0, 8).map(function (h) {
+        var count = 0;
+        for (var i = 0; i < 7; i++) {
+          var day = new Date(monday);
+          day.setDate(monday.getDate() + i);
+          if ((h.days || {})[fmtDay(day)]) count++;
+        }
+        return { label: h.name.slice(0, 200), detail: count + ' / ' + h.target };
+      }),
+      attention: conflict,
+    }).catch(ignore);
   }
 
   function renderHabits() {
